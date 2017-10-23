@@ -73,6 +73,7 @@ public class PetProvider extends ContentProvider {
 
         }
 
+        cursor.setNotificationUri(getContext().getContentResolver(),uri);
         return cursor;
     }
 
@@ -118,6 +119,8 @@ public class PetProvider extends ContentProvider {
             Log.e(LOG_TAG, "Error al insertar fila " + uri);
             return null;
         }
+
+        getContext().getContentResolver().notifyChange(uri,null);
         return ContentUris.withAppendedId(uri, newRowId);
 
     }
@@ -163,9 +166,13 @@ public class PetProvider extends ContentProvider {
 
         // Otherwise, get writeable database to update the data
         SQLiteDatabase database = mPetDbHelper.getWritableDatabase();
+        int rowsUpdated = database.update(PetEntry.TABLE_NAME, values, selection, selectionArgs);
 
+        if (rowsUpdated != 0) {
+            getContext().getContentResolver().notifyChange(uri, null);
+        }
         // Returns the number of database rows affected by the update statement
-        return database.update(PetEntry.TABLE_NAME, values, selection, selectionArgs);
+        return rowsUpdated;
 
     }
 
@@ -202,6 +209,8 @@ public class PetProvider extends ContentProvider {
         SQLiteDatabase database = mPetDbHelper.getWritableDatabase();
 
         final int match = sUriMather.match(uri);
+        getContext().getContentResolver().notifyChange(uri,null);
+
         switch (match) {
             case PETS:
                 // Delete all rows that match the selection and selection args
